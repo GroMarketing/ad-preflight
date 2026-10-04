@@ -1,0 +1,56 @@
+{
+  "name": "ad-preflight",
+  "version": "0.1.0",
+  "description": "Check that a Meta, LinkedIn or Google Ads campaign can actually serve and convert before you spend: bid, destination, approval, geo, spend cap, landing page. Plus cross-platform spend reconciliation. CLI + MCP server, read-only.",
+  "type": "module",
+  "bin": {
+    "ad-preflight": "bin/ad-preflight.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skills",
+    ".claude-plugin",
+    ".mcp.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "meta ads",
+    "facebook ads",
+    "linkedin ads",
+    "google ads",
+    "mcp",
+    "mcp-server",
+    "ads",
+    "ppc",
+    "marketing",
+    "preflight",
+    "audit",
+    "claude-code",
+    "spend"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "zod": "^4.6.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GroMarketing/ad-preflight.git"
+  },
+  "homepage": "https://github.com/GroMarketing/ad-preflight#readme",
+  "bugs": {
+    "url": "https://github.com/GroMarketing/ad-preflight/issues"
+  },
+  "author": "Ro Maldonado"
+}

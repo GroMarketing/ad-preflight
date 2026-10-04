@@ -1,0 +1,8 @@
+{
+  "name": "ad-preflight",
+  "description": "Check that Meta, LinkedIn and Google Ads campaigns can actually serve and convert before you spend, and reconcile real spend against your records. Read-only.",
+  "version": "0.1.0",
+  "author": { "name": "Ro Maldonado" },
+  "license": "MIT",
+  "keywords": ["meta ads", "linkedin ads", "google ads", "mcp", "preflight", "spend"]
+}

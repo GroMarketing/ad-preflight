@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "ad-preflight": {
+      "command": "npx",
+      "args": ["-y", "ad-preflight@latest", "mcp"],
+      "env": {
+        "META_ACCESS_TOKEN": "${META_ACCESS_TOKEN:-}",
+        "LINKEDIN_ACCESS_TOKEN": "${LINKEDIN_ACCESS_TOKEN:-}",
+        "LINKEDIN_AD_ACCOUNT_ID": "${LINKEDIN_AD_ACCOUNT_ID:-}",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "${GOOGLE_ADS_DEVELOPER_TOKEN:-}",
+        "GOOGLE_ADS_CLIENT_ID": "${GOOGLE_ADS_CLIENT_ID:-}",
+        "GOOGLE_ADS_CLIENT_SECRET": "${GOOGLE_ADS_CLIENT_SECRET:-}",
+        "GOOGLE_ADS_REFRESH_TOKEN": "${GOOGLE_ADS_REFRESH_TOKEN:-}",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "${GOOGLE_ADS_LOGIN_CUSTOMER_ID:-}"
+      }
+    }
+  }
+}

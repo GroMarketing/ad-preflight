@@ -1,0 +1,11 @@
+{
+  "name": "ad-preflight",
+  "owner": { "name": "Ro Maldonado" },
+  "plugins": [
+    {
+      "name": "ad-preflight",
+      "source": "./",
+      "description": "Check that Meta, LinkedIn and Google Ads campaigns can actually serve and convert before you spend, and reconcile real spend against your records. Read-only."
+    }
+  ]
+}

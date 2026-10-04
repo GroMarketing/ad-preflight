@@ -1,0 +1,5 @@
+[
+  { "platform": "Meta", "campaign": "Spring prospecting", "spend": 1200, "status": "active" },
+  { "platform": "LinkedIn", "campaign": "123456789", "spend": 300, "status": "paused" },
+  { "platform": "Google Ads", "campaign": "Brand search", "status": "ended" }
+]
