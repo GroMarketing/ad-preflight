@@ -60,7 +60,8 @@ real account:
 npm install -g ad-preflight      # or use npx
 ```
 
-Credentials come **only from environment variables**. Nothing is written to
+Use a **read-only token** (`ads_read`, `r_ads`): the tool never writes, and a token
+that can't write can't be misused through it. Credentials come **only from environment variables**. Nothing is written to
 disk, and tokens travel in request headers, never URLs, so they stay out of
 platform error messages and logs. Errors are scrubbed of credential values
 before printing. Read-only scopes are enough. See [`.env.example`](.env.example).

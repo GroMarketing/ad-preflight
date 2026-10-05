@@ -15,6 +15,9 @@ const iso = (d) => d.toISOString().slice(0, 10);
  * ledger: [{ platform, campaign (id or name), spend?, status? ('paused'|'active'|'ended') }]
  */
 export async function reconcile(accounts, { days = 30, since, until, ledger = [], ...opts } = {}) {
+  for (const [k, v] of [['since', since], ['until', until]]) {
+    if (v != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(v))) throw new Error(`${k} must be YYYY-MM-DD, got "${String(v).slice(0, 20)}"`);
+  }
   const end = until || iso(new Date());
   const start = since || iso(new Date(Date.now() - (days - 1) * 86400000));
   const jobs = [

@@ -2,7 +2,7 @@
   "mcpServers": {
     "ad-preflight": {
       "command": "npx",
-      "args": ["-y", "ad-preflight@latest", "mcp"],
+      "args": ["-y", "ad-preflight@0", "mcp"],
       "env": {
         "META_ACCESS_TOKEN": "${META_ACCESS_TOKEN:-}",
         "LINKEDIN_ACCESS_TOKEN": "${LINKEDIN_ACCESS_TOKEN:-}",

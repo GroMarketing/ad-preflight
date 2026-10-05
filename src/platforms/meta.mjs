@@ -1,4 +1,4 @@
-import { env, getJson } from '../http.mjs';
+import { digitsId, env, getJson, metaAccountId } from '../http.mjs';
 import { FAIL, PASS, WARN, daysUntil, finding, money } from '../report.mjs';
 import { checkLanding } from '../landing.mjs';
 
@@ -21,6 +21,8 @@ export function metaClient({ fetchImpl } = {}) {
       const next = page.paging?.next;
       if (!next) return out;
       const u = new URL(next);
+      // Only follow pages back to Graph itself; the Bearer header goes with the request.
+      if (u.protocol !== 'https:' || u.hostname !== 'graph.facebook.com') throw new Error(`refusing to follow paging link to ${u.hostname}`);
       u.searchParams.delete('access_token');
       page = await getJson('Meta', u.toString(), { headers, fetchImpl });
     }
@@ -63,7 +65,8 @@ function places(geo = {}) {
  * Check every invariant on a Meta campaign, reading live state.
  * opts.region / opts.country: where it must serve (and only there).
  */
-export async function preflightMeta(campaignId, opts = {}) {
+export async function preflightMeta(rawCampaignId, opts = {}) {
+  const campaignId = digitsId(rawCampaignId, 'Meta campaign id');
   const api = metaClient(opts);
   const c = await api.get(campaignId, {
     fields: 'id,name,objective,status,effective_status,daily_budget,lifetime_budget,bid_strategy,stop_time,start_time,special_ad_categories,account_id',
@@ -71,7 +74,7 @@ export async function preflightMeta(campaignId, opts = {}) {
   const [adsets, ads, account] = await Promise.all([
     api.all(`${campaignId}/adsets`, { fields: 'id,name,status,effective_status,daily_budget,lifetime_budget,bid_strategy,bid_amount,optimization_goal,destination_type,end_time,targeting' }),
     api.all(`${campaignId}/ads`, { fields: 'id,name,status,effective_status,issues_info,ad_review_feedback,creative{id,object_story_spec,asset_feed_spec,call_to_action_type,link_url}' }),
-    api.get(`act_${c.account_id}`, { fields: 'currency,spend_cap,amount_spent,account_status' }),
+    api.get(metaAccountId(c.account_id), { fields: 'currency,spend_cap,amount_spent,account_status' }),
   ]);
   const cur = account.currency || 'USD';
   const findings = [];
@@ -201,7 +204,7 @@ export async function preflightMeta(campaignId, opts = {}) {
 /** Campaigns that can spend, and spend over the window, for reconciliation. */
 export async function metaSpend(accountId, { since, until, ...opts }) {
   const api = metaClient(opts);
-  const act = accountId.startsWith('act_') ? accountId : `act_${accountId}`;
+  const act = metaAccountId(accountId);
   const [campaigns, insights, account] = await Promise.all([
     api.all(`${act}/campaigns`, { fields: 'id,name,status,effective_status,daily_budget,lifetime_budget,stop_time' }),
     api.all(`${act}/insights`, { level: 'campaign', time_range: JSON.stringify({ since, until }), fields: 'campaign_id,campaign_name,spend,impressions,clicks,inline_link_clicks,actions' }),

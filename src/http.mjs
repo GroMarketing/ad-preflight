@@ -70,6 +70,24 @@ export async function getJson(platform, url, { headers = {}, method = 'GET', bod
   throw last;
 }
 
+/**
+ * IDs go into URL paths. Anything but the expected shape is rejected, so a crafted
+ * value (from a prompt-injected agent, say) can't add query parameters or change the path.
+ */
+export function digitsId(value, what) {
+  const s = String(value ?? '').trim();
+  if (!/^\d{1,25}$/.test(s)) throw new Error(`${what} must be digits only, got "${s.slice(0, 40)}"`);
+  return s;
+}
+
+/** Meta ad account: digits with or without the act_ prefix. Returns act_<digits>. */
+export function metaAccountId(value) {
+  const s = String(value ?? '').trim();
+  const m = s.match(/^(?:act_)?(\d{1,25})$/);
+  if (!m) throw new Error(`Meta ad account must look like act_123 or 123, got "${s.slice(0, 40)}"`);
+  return `act_${m[1]}`;
+}
+
 /** Read a required env var, with a setup hint instead of a stack trace. */
 export function env(name, hint) {
   const v = process.env[name];

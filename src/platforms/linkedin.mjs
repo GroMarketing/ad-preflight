@@ -1,4 +1,4 @@
-import { env, getJson } from '../http.mjs';
+import { digitsId, env, getJson } from '../http.mjs';
 import { FAIL, PASS, WARN, daysUntil, finding, money } from '../report.mjs';
 import { checkLanding } from '../landing.mjs';
 
@@ -50,9 +50,11 @@ function locationUrns(tc = {}) {
  * Check every invariant on a LinkedIn campaign, reading live state.
  * opts.account is the ad account id; opts.region / opts.country: where it must serve.
  */
-export async function preflightLinkedIn(campaignId, opts = {}) {
-  const account = opts.account || process.env.LINKEDIN_AD_ACCOUNT_ID;
-  if (!account) throw new Error('LinkedIn needs the ad account id: --account <id> or LINKEDIN_AD_ACCOUNT_ID.');
+export async function preflightLinkedIn(rawCampaignId, opts = {}) {
+  const rawAccount = opts.account || process.env.LINKEDIN_AD_ACCOUNT_ID;
+  if (!rawAccount) throw new Error('LinkedIn needs the ad account id: --account <id> or LINKEDIN_AD_ACCOUNT_ID.');
+  const account = digitsId(rawAccount, 'LinkedIn ad account id');
+  const campaignId = digitsId(rawCampaignId, 'LinkedIn campaign id');
   const api = linkedinClient(opts);
   const c = await api.get(`adAccounts/${account}/adCampaigns/${campaignId}`);
   const creatives = (await api.get(`adAccounts/${account}/creatives?q=criteria&campaigns=List(${enc(`urn:li:sponsoredCampaign:${campaignId}`)})`)).elements || [];
@@ -189,7 +191,8 @@ const ymd = (iso) => {
 };
 
 /** Campaigns that can spend, and spend over the window, for reconciliation. */
-export async function linkedinSpend(accountId, { since, until, ...opts }) {
+export async function linkedinSpend(rawAccountId, { since, until, ...opts }) {
+  const accountId = digitsId(rawAccountId, 'LinkedIn ad account id');
   const api = linkedinClient(opts);
   const campaigns = [];
   let start = 0;

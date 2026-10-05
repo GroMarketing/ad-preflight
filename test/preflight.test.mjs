@@ -29,6 +29,7 @@ function mockFetch(routes) {
 }
 const by = (r, id) => r.findings.find((f) => f.id === id);
 const LANDING = [/^https:\/\/example\.com/, {}];
+const PUBLIC_DNS = async () => [{ address: '93.184.215.14' }];
 const future = new Date(Date.now() + 10 * 86400000).toISOString();
 
 // ---------- Meta ----------
@@ -41,21 +42,21 @@ const metaBase = (over = {}) => [
 ];
 
 test('Meta: a clean campaign passes, and an uncapped daily budget with no end date fails', async () => {
-  const r = await preflightMeta('111', { region: 'Ohio', fetchImpl: mockFetch(metaBase()) });
+  const r = await preflightMeta('111', { region: 'Ohio', fetchImpl: mockFetch(metaBase()), resolve: PUBLIC_DNS });
   for (const id of ['schedule', 'bid', 'destination', 'live', 'geo', 'landing']) assert.equal(by(r, id).status, 'PASS', `${id}: ${by(r, id).observed}`);
   assert.equal(by(r, 'spend').status, 'FAIL');
   assert.match(by(r, 'spend').observed, /\$50\.00\/day with no end date/);
 });
 
 test('Meta: "0" budgets are unset, not a $0 cap', async () => {
-  const r = await preflightMeta('111', { fetchImpl: mockFetch(metaBase({ spendCap: '10000' })) });
+  const r = await preflightMeta('111', { fetchImpl: mockFetch(metaBase({ spendCap: '10000' })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'spend').status, 'WARN');
   assert.match(by(r, 'spend').observed, /account cap leaves \$100\.00/);
 });
 
 test('Meta: a city key that resolved to the wrong state fails geo', async () => {
   const adsets = [{ id: 's1', name: 'set', status: 'ACTIVE', bid_strategy: 'LOWEST_COST_WITHOUT_CAP', targeting: { geo_locations: { cities: [{ key: '1', name: 'Springfield', region: 'Illinois', country: 'US' }, { key: '2', name: 'Dayton', region: 'Ohio', country: 'US' }] } } }];
-  const r = await preflightMeta('111', { region: 'Ohio', fetchImpl: mockFetch(metaBase({ adsets, campaign: { stop_time: future } })) });
+  const r = await preflightMeta('111', { region: 'Ohio', fetchImpl: mockFetch(metaBase({ adsets, campaign: { stop_time: future } })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'geo').status, 'FAIL');
   assert.match(by(r, 'geo').observed, /Springfield, Illinois/);
   assert.doesNotMatch(by(r, 'geo').observed, /Dayton/);
@@ -64,7 +65,7 @@ test('Meta: a city key that resolved to the wrong state fails geo', async () => 
 test('Meta: a cost cap with no amount cannot bid; an ad with no link or form has no destination', async () => {
   const adsets = [{ id: 's1', name: 'capped', status: 'ACTIVE', bid_strategy: 'COST_CAP', targeting: { geo_locations: { countries: ['US'] } } }];
   const ads = [{ id: 'a1', name: 'bare video', status: 'ACTIVE', effective_status: 'ACTIVE', creative: { object_story_spec: { video_data: { video_id: 'v' } } } }];
-  const r = await preflightMeta('111', { fetchImpl: mockFetch(metaBase({ adsets, ads })) });
+  const r = await preflightMeta('111', { fetchImpl: mockFetch(metaBase({ adsets, ads })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'bid').status, 'FAIL');
   assert.equal(by(r, 'destination').status, 'FAIL');
   assert.equal(verdict(r.findings).safe, false);
@@ -73,14 +74,14 @@ test('Meta: a cost cap with no amount cannot bid; an ad with no link or form has
 test('Meta: an inactive lead form fails destination', async () => {
   const ads = [{ id: 'a1', name: 'lead', status: 'ACTIVE', effective_status: 'ACTIVE', creative: { object_story_spec: { video_data: { call_to_action: { type: 'SIGN_UP', value: { lead_gen_form_id: '555' } } } } } }];
   const routes = [[/\/555\?/, { id: '555', name: 'form', status: 'ARCHIVED' }], ...metaBase({ ads })];
-  const r = await preflightMeta('111', { fetchImpl: mockFetch(routes) });
+  const r = await preflightMeta('111', { fetchImpl: mockFetch(routes), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'destination').status, 'FAIL');
   assert.match(by(r, 'destination').observed, /555 is ARCHIVED/);
 });
 
 test('Meta: tokens go in the Authorization header, never the URL', async () => {
   const f = mockFetch(metaBase());
-  await preflightMeta('111', { fetchImpl: f });
+  await preflightMeta('111', { fetchImpl: f, resolve: PUBLIC_DNS });
   for (const c of f.calls.filter((c) => c.url.includes('graph.facebook.com'))) {
     assert.doesNotMatch(c.url, /access_token|EAAtest/);
     assert.match(c.init.headers.Authorization, /^Bearer /);
@@ -102,14 +103,14 @@ const liRoutes = ({ campaign = liCampaign(), creatives, post, geoName = 'Ohio, U
 ];
 
 test('LinkedIn: NONE + $0 is no bid', async () => {
-  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ campaign: liCampaign({ costType: 'CPV', optimizationTargetType: 'NONE', unitCost: { amount: '0' } }) })) });
+  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ campaign: liCampaign({ costType: 'CPV', optimizationTargetType: 'NONE', unitCost: { amount: '0' } }), resolve: PUBLIC_DNS })) });
   assert.equal(by(r, 'bid').status, 'FAIL');
   assert.match(by(r, 'bid').observed, /CPV \/ NONE \/ unitCost 0/);
 });
 
 test('LinkedIn: a video post without a landing page has nowhere to go', async () => {
   const post = { content: { media: { id: 'urn:li:video:1' } } };
-  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ post })) });
+  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ post })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'destination').status, 'FAIL');
   assert.match(by(r, 'destination').observed, /no contentLandingPage and no contentCallToActionLabel/);
 });
@@ -119,26 +120,26 @@ test('LinkedIn: a placeholder lead form URN fails; drafts are ignored', async ()
     { id: 'c1', name: 'leadgen', intendedStatus: 'ACTIVE', isServing: true, leadgenCallToAction: { destination: 'REPLACE_WITH_FORM' } },
     { id: 'c2', name: 'draft', intendedStatus: 'DRAFT', isServing: false },
   ];
-  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ creatives })) });
+  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ creatives })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'destination').status, 'FAIL');
   assert.match(by(r, 'live').observed, /1 draft\(s\) ignored/);
 });
 
 test('LinkedIn: a whole country is wider than the region asked for; a daily budget alone is unbounded', async () => {
   const campaign = liCampaign({ totalBudget: undefined });
-  const r = await preflightLinkedIn('42', { account: '7', region: 'Ohio', fetchImpl: mockFetch(liRoutes({ campaign, geoName: 'United States' })) });
+  const r = await preflightLinkedIn('42', { account: '7', region: 'Ohio', fetchImpl: mockFetch(liRoutes({ campaign, geoName: 'United States' })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'geo').status, 'FAIL');
   assert.equal(by(r, 'spend').status, 'FAIL');
 });
 
 test('LinkedIn: a finished campaign cannot serve', async () => {
-  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ campaign: liCampaign({ status: 'COMPLETED' }) })) });
+  const r = await preflightLinkedIn('42', { account: '7', fetchImpl: mockFetch(liRoutes({ campaign: liCampaign({ status: 'COMPLETED' }), resolve: PUBLIC_DNS })) });
   assert.equal(by(r, 'schedule').status, 'FAIL');
 });
 
 test('LinkedIn: a retired API version gets a clear message', async () => {
   const f = mockFetch([[/adCampaigns/, { __status: 426, code: 'NONEXISTENT_VERSION', message: 'Requested version 20250901 is not active' }]]);
-  await assert.rejects(preflightLinkedIn('42', { account: '7', fetchImpl: f }), /no longer active\. Set LINKEDIN_API_VERSION/);
+  await assert.rejects(preflightLinkedIn('42', { account: '7', fetchImpl: f, resolve: PUBLIC_DNS }), /no longer active\. Set LINKEDIN_API_VERSION/);
 });
 
 // ---------- Google Ads ----------
@@ -152,14 +153,14 @@ const gRoutes = ({ campaign = {}, groups, geo } = {}) => [
 ];
 
 test('Google: manual CPC with a $0 ad group bid cannot compete; no end date is unbounded', async () => {
-  const r = await preflightGoogle('123-456-7890', '5', { region: 'Ohio', fetchImpl: mockFetch(gRoutes()) });
+  const r = await preflightGoogle('123-456-7890', '5', { region: 'Ohio', fetchImpl: mockFetch(gRoutes()), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'bid').status, 'FAIL');
   assert.equal(by(r, 'geo').status, 'PASS');
   assert.equal(by(r, 'spend').status, 'FAIL');
 });
 
 test('Google: no location targeting fails geo', async () => {
-  const r = await preflightGoogle('1234567890', '5', { fetchImpl: mockFetch(gRoutes({ groups: { cpcBidMicros: '1500000' }, geo: [] })) });
+  const r = await preflightGoogle('1234567890', '5', { fetchImpl: mockFetch(gRoutes({ groups: { cpcBidMicros: '1500000' }, geo: [] })), resolve: PUBLIC_DNS });
   assert.equal(by(r, 'bid').status, 'PASS');
   assert.equal(by(r, 'geo').status, 'FAIL');
 });
@@ -172,13 +173,36 @@ test('reconcile: catches a "paused" campaign that can spend, and a spend gap', a
     [/\/act_1\?/, { currency: 'USD', spend_cap: '0', amount_spent: '0' }],
   ]);
   const ledger = [{ platform: 'Meta', campaign: '10', spend: 300, status: 'paused' }, { platform: 'Meta', campaign: 'Old', spend: 12 }];
-  const r = await reconcile({ meta: ['act_1'] }, { since: '2026-01-01', until: '2026-01-31', ledger, fetchImpl: f });
+  const r = await reconcile({ meta: ['act_1'] }, { since: '2026-01-01', until: '2026-01-31', ledger, fetchImpl: f, resolve: PUBLIC_DNS });
   assert.equal(r.canSpend.length, 1);
   assert.equal(r.discrepancies.length, 2);
   assert.ok(r.discrepancies.some((d) => Math.abs(d.gap - 1700) < 0.01));
   assert.ok(r.discrepancies.some((d) => /can spend right now/.test(d.note)));
   assert.equal(r.broken.length, 1);
   assert.deepEqual(r.uncappedMetaAccounts, ['act_1']);
+});
+
+// ---------- Hardening ----------
+test('ids are digits only: a crafted id cannot add query parameters', async () => {
+  const f = mockFetch(metaBase());
+  await assert.rejects(preflightMeta('120200000000?method=post&status=ACTIVE&x=', { fetchImpl: f }), /digits only/);
+  await assert.rejects(preflightLinkedIn('42', { account: '../../adAccounts/999', fetchImpl: f }), /digits only/);
+  await assert.rejects(preflightLinkedIn('42/../99', { account: '7', fetchImpl: f }), /digits only/);
+  assert.equal(f.calls.length, 0, 'nothing was requested');
+});
+
+test('landing check never fetches internal addresses, including via redirect', async () => {
+  const { checkLanding } = await import('../src/landing.mjs');
+  const fetched = [];
+  const fetchImpl = async (url) => { fetched.push(url); return { status: 302, headers: { get: () => 'http://169.254.169.254/latest/meta-data' }, body: null }; };
+  const r = await checkLanding(['http://127.0.0.1:8080/admin', 'file:///etc/passwd', 'https://example.com/lp'], { fetchImpl, resolve: PUBLIC_DNS });
+  assert.equal(r.status, 'FAIL');
+  assert.deepEqual(fetched, ['https://example.com/lp'], 'only the public URL was requested; the redirect to metadata was not followed');
+  assert.match(r.observed, /internal address/);
+});
+
+test('reconcile rejects malformed dates', async () => {
+  await assert.rejects(reconcile({ meta: ['act_1'] }, { since: "2026-01-01' OR 1=1", fetchImpl: mockFetch([]) }), /YYYY-MM-DD/);
 });
 
 // ---------- Redaction ----------
