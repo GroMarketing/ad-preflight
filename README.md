@@ -1,5 +1,7 @@
 # ad-preflight
 
+<p align="center"><img src="https://raw.githubusercontent.com/GroMarketing/ad-preflight/main/.github/social-preview.png" alt="ad-preflight: Meta Ads, Google Ads and LinkedIn Ads MCP server and CLI for pre-launch campaign audits" width="100%"></p>
+
 A read-only Meta Ads, Google Ads and LinkedIn Ads MCP server and CLI that audits a campaign before you spend.
 
 **Can this campaign actually serve, and if it serves, can it convert?**
