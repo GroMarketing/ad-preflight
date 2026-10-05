@@ -71,7 +71,8 @@ before printing. Read-only scopes are enough. See [`.env.example`](.env.example)
 | LinkedIn | `LINKEDIN_ACCESS_TOKEN`, optional `LINKEDIN_AD_ACCOUNT_ID` | `r_ads`, `r_ads_reporting` |
 | Google Ads | `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_REFRESH_TOKEN`, optional `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | `adwords` |
 
-API versions default to Meta `v24.0`, LinkedIn `202509` and Google Ads `v25`.
+API versions default to Meta `v24.0`, LinkedIn `202609` and Google Ads `v25`.
+LinkedIn retires monthly versions; if it answers "version is no longer active", set a newer one.
 Override them with `META_API_VERSION`, `LINKEDIN_API_VERSION` or
 `GOOGLE_ADS_API_VERSION`.
 

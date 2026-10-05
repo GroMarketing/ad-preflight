@@ -136,6 +136,11 @@ test('LinkedIn: a finished campaign cannot serve', async () => {
   assert.equal(by(r, 'schedule').status, 'FAIL');
 });
 
+test('LinkedIn: a retired API version gets a clear message', async () => {
+  const f = mockFetch([[/adCampaigns/, { __status: 426, code: 'NONEXISTENT_VERSION', message: 'Requested version 20250901 is not active' }]]);
+  await assert.rejects(preflightLinkedIn('42', { account: '7', fetchImpl: f }), /no longer active\. Set LINKEDIN_API_VERSION/);
+});
+
 // ---------- Google Ads ----------
 const gRoutes = ({ campaign = {}, groups, geo } = {}) => [
   [/oauth2\.googleapis\.com/, { access_token: 'ya29.test-access-token' }],

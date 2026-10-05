@@ -1,6 +1,6 @@
 {
   "name": "ad-preflight",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Check that a Meta, LinkedIn or Google Ads campaign can actually serve and convert before you spend: bid, destination, approval, geo, spend cap, landing page. Plus cross-platform spend reconciliation. CLI + MCP server, read-only.",
   "type": "module",
   "bin": {

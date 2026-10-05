@@ -2,17 +2,29 @@ import { env, getJson } from '../http.mjs';
 import { FAIL, PASS, WARN, daysUntil, finding, money } from '../report.mjs';
 import { checkLanding } from '../landing.mjs';
 
+/** Active as of 2026-10; LinkedIn retires versions roughly a year after release. */
+const DEFAULT_VERSION = '202609';
 const HINT = 'Create a token with r_ads and r_ads_reporting (Marketing Developer Platform app) and export LINKEDIN_ACCESS_TOKEN.';
 
 export function linkedinClient({ fetchImpl } = {}) {
   const token = env('LINKEDIN_ACCESS_TOKEN', HINT);
   const headers = {
     Authorization: `Bearer ${token}`,
-    'LinkedIn-Version': process.env.LINKEDIN_API_VERSION || '202509',
+    'LinkedIn-Version': process.env.LINKEDIN_API_VERSION || DEFAULT_VERSION,
     'X-Restli-Protocol-Version': '2.0.0',
   };
   // Rest.li queries carry their own syntax (List(...), (start:(...))), so paths arrive pre-built.
-  const get = (path) => getJson('LinkedIn', `https://api.linkedin.com/rest/${path}`, { headers, fetchImpl });
+  const get = async (path) => {
+    try {
+      return await getJson('LinkedIn', `https://api.linkedin.com/rest/${path}`, { headers, fetchImpl });
+    } catch (e) {
+      // LinkedIn retires monthly API versions; a retired one answers 426 NONEXISTENT_VERSION.
+      if (e.status === 426 || /NONEXISTENT_VERSION/.test(e.message)) {
+        throw new Error(`LinkedIn API version ${headers['LinkedIn-Version']} is no longer active. Set LINKEDIN_API_VERSION to a recent month (YYYYMM), e.g. ${DEFAULT_VERSION} or newer.`);
+      }
+      throw e;
+    }
+  };
   return { get };
 }
 
