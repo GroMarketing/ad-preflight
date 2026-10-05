@@ -1,5 +1,7 @@
 # ad-preflight
 
+A read-only Meta Ads, Google Ads and LinkedIn Ads MCP server and CLI that audits a campaign before you spend.
+
 **Can this campaign actually serve, and if it serves, can it convert?**
 
 `ad-preflight` reads a Meta, LinkedIn or Google Ads campaign from the platform's

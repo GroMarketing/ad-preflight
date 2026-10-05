@@ -1,7 +1,7 @@
 {
   "name": "ad-preflight",
-  "version": "0.1.1",
-  "description": "Check that a Meta, LinkedIn or Google Ads campaign can actually serve and convert before you spend: bid, destination, approval, geo, spend cap, landing page. Plus cross-platform spend reconciliation. CLI + MCP server, read-only.",
+  "version": "0.1.2",
+  "description": "Meta Ads, Google Ads and LinkedIn Ads MCP server and CLI for pre-launch campaign audits: checks bid, destination, approval, geo, spend cap and landing page before you spend, plus spend reconciliation. Read-only.",
   "type": "module",
   "bin": {
     "ad-preflight": "bin/ad-preflight.mjs"
@@ -37,7 +37,15 @@
     "preflight",
     "audit",
     "claude-code",
-    "spend"
+    "spend",
+    "meta ads mcp",
+    "google ads mcp",
+    "facebook ads mcp",
+    "linkedin ads mcp",
+    "google ads audit",
+    "ppc audit",
+    "ad audit",
+    "meta ads api"
   ],
   "license": "MIT",
   "dependencies": {
